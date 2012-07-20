@@ -1,6 +1,6 @@
 (ns portage.core)
 
-(defn -main
-  "I don't do a whole lot."
-  [& args]
-  (println "Hello, World!"))
+(defmacro portage->
+  [x f & forms]
+  `(do (~f (-> ~x ~@forms))
+       nil))
