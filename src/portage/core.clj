@@ -1,6 +1,6 @@
 (ns portage.core)
 
-(defn portageable?
+(defn- portageable?
   [sym]
   (boolean (-> sym resolve meta :portageable)))
 
