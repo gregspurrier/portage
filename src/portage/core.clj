@@ -5,16 +5,16 @@
   (boolean (-> sym resolve meta :portageable)))
 
 (defmacro -+->
-  ([x f]
+  ([f x]
      `(do (~f ~x) nil))
-  ([x f form]
+  ([f x form]
      (if (portageable? (first form))
        `(do (~(first form) ~f ~x ~@(next form)) nil)
        `(do (~f (~(first form) ~x ~@(next form))) nil)))
-  ([x f form & more]
+  ([f x form & more]
      (if (portageable? (first form))
        (let [sym (gensym)]
-         `(do (~(first form) (fn [~sym] (-+-> ~sym ~f ~@more))
+         `(do (~(first form) (fn [~sym] (-+-> ~f ~sym ~@more))
                ~x ~@(next form))
               nil))
-       `(do (-+-> (-> ~x ~form) ~f ~@more) nil))))
+       `(do (-+-> ~f (-> ~x ~form) ~@more) nil))))
