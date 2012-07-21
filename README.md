@@ -28,7 +28,7 @@ You chart your course down a river of functions. Portage gets you through the as
 ;; an atom so that we can examine it.
 (def result-atom (atom nil))
 
-(portage-> 2 #(reset! result-atom %)
+(-+-> 2 #(reset! result-atom %)
            (times-two)
            (async-times-two)
            (times-two)
@@ -36,7 +36,7 @@ You chart your course down a river of functions. Portage gets you through the as
            (times-two))
 
 ;; The result atom is still nil immediately after the return from the
-;; portage-> form:
+;; -+-> form:
 ;;
 ;; user> @result-atom
 ;; nil
@@ -49,7 +49,7 @@ You chart your course down a river of functions. Portage gets you through the as
 
 ## To Do
 - Allow parens to be omitted from one-argument functions, just like `->`
-- Make `portage->>`, equivalent to `->>`
+- Make `-+->>`, equivalent to `->>`
 - Monadic (?) handling and propagation of errors down the flow
 - Parallel flows
 - Convenience wrapper block waiting for final result
