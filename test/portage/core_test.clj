@@ -10,10 +10,10 @@
   37)
 
 (fact "non-portageable functions are threaded as with ->"
-  (portage-> ..input.. result-fn
-             (one-arg-fn)
-             (one-arg-fn)
-             (two-arg-fn ..arg2..))
+  (-+-> ..input.. result-fn
+        (one-arg-fn)
+        (one-arg-fn)
+        (two-arg-fn ..arg2..))
   => nil
   (provided (one-arg-fn ..input..) => ..result1..
             (one-arg-fn ..result1..) => ..result2..
@@ -21,28 +21,28 @@
             (result-fn ..result3..) => ..anything..))
 
 (fact
-  (portage-> ..input.. result-fn
-             (portage-wrapped-one-arg-fn))
+  (-+-> ..input.. result-fn
+        (portage-wrapped-one-arg-fn))
   => nil
   (provided (one-arg-fn ..input..) => ..result..
             (result-fn ..result..) => ..anything..))
 
 (fact
-  (portage-> ..input.. result-fn
-             (portage-wrapped-one-arg-fn)
-             (one-arg-fn))
+  (-+-> ..input.. result-fn
+        (portage-wrapped-one-arg-fn)
+        (one-arg-fn))
   => nil
   (provided (one-arg-fn ..input..) => ..result1..
             (one-arg-fn ..result1..) => ..result2..
             (result-fn ..result2..) => ..anything..))
 
 (fact
-  (portage-> ..input.. result-fn
-             (two-arg-fn ..arg1..)
-             (portage-wrapped-one-arg-fn)
-             (one-arg-fn)
-             (portage-wrapped-one-arg-fn)
-             (two-arg-fn ..arg2..))
+  (-+-> ..input.. result-fn
+        (two-arg-fn ..arg1..)
+        (portage-wrapped-one-arg-fn)
+        (one-arg-fn)
+        (portage-wrapped-one-arg-fn)
+        (two-arg-fn ..arg2..))
   => nil
   (provided (two-arg-fn ..input.. ..arg1..)   => ..result1..
             (one-arg-fn ..result1..)          => ..result2..

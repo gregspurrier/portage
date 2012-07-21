@@ -4,7 +4,7 @@
   [sym]
   (boolean (-> sym resolve meta :portageable)))
 
-(defmacro portage->
+(defmacro -+->
   ([x f]
      `(do (~f ~x) nil))
   ([x f form]
@@ -14,7 +14,7 @@
   ([x f form & more]
      (if (portageable? (first form))
        (let [sym (gensym)]
-         `(do (~(first form) (fn [~sym] (portage-> ~sym ~f ~@more))
+         `(do (~(first form) (fn [~sym] (-+-> ~sym ~f ~@more))
                ~x ~@(next form))
               nil))
-       `(do (portage-> (-> ~x ~form) ~f ~@more) nil))))
+       `(do (-+-> (-> ~x ~form) ~f ~@more) nil))))
