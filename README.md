@@ -37,7 +37,7 @@ You chart your course down a river of functions. Portage gets you through the as
 
 ;; The result atom is still nil immediately after the return from the
 ;; portage-> form:
-
+;;
 ;; user> @result-atom
 ;; nil
 ;;
@@ -52,6 +52,7 @@ You chart your course down a river of functions. Portage gets you through the as
 - Make `portage->>`, equivalent to `->>`
 - Monadic (?) handling and propagation of errors down the flow
 - Parallel flows
+- Convenience wrapper block waiting for final result
 
 ## License
 
