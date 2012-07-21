@@ -50,7 +50,6 @@ You chart your course down a river of functions. Portage gets you through the as
 
 ## To Do
 - Allow parens to be omitted from one-argument functions, just like `->`
-- Treat a -+-> form as portageable within another -+-> form
 - Make `-+->>`, equivalent to `->>`
 - Monadic (?) handling and propagation of errors down the flow
 - Parallel flows

@@ -50,3 +50,13 @@
             (one-arg-fn ..result3..)          => ..result4..
             (two-arg-fn ..result4.. ..arg2..) => ..result5..
             (result-fn ..result5..)           => ..anything..))
+
+(fact "-+-> forms are portageable themselves"
+  (-+-> result-fn ..input..
+        (-+-> (one-arg-fn) (two-arg-fn ..arg..))
+        (one-arg-fn))
+  => nil
+  (provided (one-arg-fn ..input..)           => ..result1..
+            (two-arg-fn ..result1.. ..arg..) => ..result2..
+            (one-arg-fn ..result2..)         => ..result3..
+            (result-fn ..result3..)          => ..anything..))

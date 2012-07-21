@@ -1,8 +1,10 @@
-(ns portage.core)
+(ns portage.core
+  (:use clojure.pprint))
 
 (defn- portageable?
   [sym]
-  (boolean (-> sym resolve meta :portageable)))
+  (or (= sym '-+->)
+      (boolean (-> sym resolve meta :portageable))))
 
 (defmacro -+->
   ([f x]
