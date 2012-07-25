@@ -36,10 +36,15 @@ You chart your course down a river of functions. Portage gets you through the as
 ;;   Carry on.
 ```
 
+## Handling Errors
+Functions can return--or pass to the result callback, in the case of asynchronous functions--an error value created with `portage.core/error` to indicate that an error has occurred during processing. By default, all remaining intermediate forms will be skipped and only the final form will be invoked with the error value. This can be overridden by tagging functions used in intermediate forms with the :accepts-errors metadata. Any such function will receive the error value rather than being skipped.
+
+Use `portage.core/error?` to determine whether a value is an error. The value wrapped in an error can be retrieved with `portage.core/error-value`.
+
 ## To Do
-- Make `-+->>`, equivalent to `->>`
-- Monadic (?) handling and propagation of errors down the flow
+- Catch exceptions in form execution and wrap them in portage errors
 - Parallel async flows
+- Make `-+->>`, equivalent to `->>`
 - Convenience wrapper block waiting for blocking for, and returning, final result
 
 ## License
