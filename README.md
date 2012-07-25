@@ -6,53 +6,40 @@ You chart your course down a river of functions. Portage gets you through the as
 ```clojure
 (use 'portage.core)
 
-;; A synchronous function that doubles a number
-(defn times-two [x]
-  (println "doubling...")
-  (* x 2))
+;; Portage carries your code over asynchronous bumps in the control
+;; flow. To do this, the asynchonous function must be marked as
+;; :portageable and accept a callback function as its first argument.
+;; For example:
+(defn ^:portageable async-str
+  [callback & args]
+  (.start (Thread. (fn []
+                     (println "Awaiting asynchronous result...")
+                     (Thread/sleep 3000)
+                     (callback (apply str args))))))
 
-;; An asynchronous version that hands off control to an agent and
-;; takes a while to compute the result and invoke the callback.
-;; Note that async-times-two is marked as :portageable which lets
-;; portage know that it is asynchronous.
-(def async-agent (agent nil))
-(defn ^:portageable async-times-two
-  [cc x]
-  (send-off async-agent (fn [_]
-                       (Thread/sleep 5000)
-                       (cc (times-two x))
-                       nil)))
+;; Using the -+-> macro, you can thread together normal and portageable
+;; asynchronous functions. The -+-> macro always returns nil: the final
+;; form should do something with the result.
+(-+-> "With portage "
+      (str "you can mix normal ")
+      (async-str "and asyncronous functions ")
+      (str "in the same flow.")
+      (async-str "\nCarry on.")
+      println)
 
-;; Now let portage navigate the flow, managing the asynchronous operations
-;; behind the scenes. The portage result function will put the result in
-;; an atom so that we can examine it.
-(def result-atom (atom nil))
-
-(-+-> #(reset! result-atom %) 
-      2
-      times-two
-      async-times-two
-      times-two
-      async-times-two
-      times-two)
-
-;; The result atom is still nil immediately after the return from the
-;; -+-> form:
+;; The above form will immediately return nil and then you'll see the
+;; following output:
 ;;
-;; user> @result-atom
-;; nil
-;;
-;; 10 seconds later, the result has found its way through the flow:
-;;
-;; user> @result-atom
-;; 64
-```
+;;   Awaiting asynchronous result...
+;;   Awaiting asynchronous result...
+;;   With portage you can mix normal and asyncronous functions in the same flow.
+;;   Carry on.
 
 ## To Do
 - Make `-+->>`, equivalent to `->>`
 - Monadic (?) handling and propagation of errors down the flow
-- Parallel flows
-- Convenience wrapper block waiting for final result
+- Parallel async flows
+- Convenience wrapper block waiting for blocking for, and returning, final result
 
 ## License
 

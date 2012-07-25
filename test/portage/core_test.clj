@@ -15,10 +15,11 @@
   42)
 
 (fact "normal functions are threaded as with ->"
-  (-+-> result-fn ..input..
+  (-+-> ..input..
         one-arg-fn
         (one-arg-fn)
-        (two-arg-fn ..arg..))
+        (two-arg-fn ..arg..)
+        result-fn)
   => nil
   (provided (one-arg-fn ..input..) => ..result1..
             (one-arg-fn ..result1..) => ..result2..
@@ -26,10 +27,11 @@
             (result-fn ..result3..) => ..anything..))
 
 (fact "portageable functions appear to be threaded as with ->"
-  (-+-> result-fn ..input..
+  (-+-> ..input..
         portage-wrapped-one-arg-fn
         (portage-wrapped-one-arg-fn)
-        (portage-wrapped-two-arg-fn ..arg..))
+        (portage-wrapped-two-arg-fn ..arg..)
+        result-fn)
   => nil
   (provided (one-arg-fn ..input..) => ..result1..
             (one-arg-fn ..result1..) => ..result2..
@@ -37,32 +39,24 @@
             (result-fn ..result3..) => ..anything..))
 
 (fact "normal and porteagable functions can be mixed in the same flow"
-  (-+-> result-fn ..input..
+  (-+-> ..input..
         (two-arg-fn ..arg..)
         portage-wrapped-one-arg-fn
-        one-arg-fn)
+        one-arg-fn
+        result-fn)
   => nil
   (provided (two-arg-fn ..input.. ..arg..) => ..result1..
             (one-arg-fn ..result1..) => ..result2..
             (one-arg-fn ..result2..) => ..result3..
             (result-fn ..result3..) => ..anything..)
 
-  (-+-> result-fn ..input..
+  (-+-> ..input..
         (portage-wrapped-two-arg-fn ..arg..)
         one-arg-fn
-        portage-wrapped-one-arg-fn)
+        portage-wrapped-one-arg-fn
+        result-fn)
   => nil
   (provided (two-arg-fn ..input.. ..arg..) => ..result1..
             (one-arg-fn ..result1..) => ..result2..
             (one-arg-fn ..result2..) => ..result3..
             (result-fn ..result3..) => ..anything..))
-
-(fact "-+-> forms are portageable themselves"
-  (-+-> result-fn ..input..
-        (-+-> one-arg-fn (two-arg-fn ..arg..))
-        one-arg-fn)
-  => nil
-  (provided (one-arg-fn ..input..)           => ..result1..
-            (two-arg-fn ..result1.. ..arg..) => ..result2..
-            (one-arg-fn ..result2..)         => ..result3..
-            (result-fn ..result3..)          => ..anything..))
