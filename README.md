@@ -34,6 +34,7 @@ You chart your course down a river of functions. Portage gets you through the as
 ;;   Awaiting asynchronous result...
 ;;   With portage you can mix normal and asyncronous functions in the same flow.
 ;;   Carry on.
+```
 
 ## To Do
 - Make `-+->>`, equivalent to `->>`
