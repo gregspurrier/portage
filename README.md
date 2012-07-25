@@ -1,6 +1,8 @@
 # Portage
 
-You chart your course down a river of functions. Portage gets you through the asynchronous rapids.
+Reading and writing code that uses asynchronous functions can feel a bit like canoeing down a river full of waterfalls. Just when you're getting the hang of things, an asynchronous call forces you to stop, get out of the flow, and figure out where it picks up again.
+
+Portage helps with this. It automatically carries your code across portageable asynchronous functions, letting you mix normal and asynchronous functions without breaking up the flow of your code.
 
 ## Example
 ```clojure
