@@ -1,10 +1,19 @@
 (ns portage.core
   (:use clojure.pprint))
 
+(defn- tagged-with?
+  [sym tag]
+  (boolean (-> sym resolve meta tag)))
+
 (defn- portageable?
-  "Returns true if sym represents a portageable macro or function."
+  "Returns true if sym represents a portageable function."
   [sym]
-  (boolean (-> sym resolve meta :portageable)))
+  (tagged-with? sym :portageable))
+
+(defn- accepts-errors?
+  "Returns true if sym represents a function that accepts portage errors."
+  [sym]
+  (tagged-with? sym :accepts-errors))
 
 (defn- promote-to-list
   "Promotes non-list forms to be a single element list containing that form.
@@ -13,6 +22,20 @@ Forms that are already lists are unchanged."
   (if (seq? form)
     form
     (list form)))
+
+(defn error
+  "Create a Portage error having the value x"
+  [x]
+  {:portage-error x})
+
+(defn error?
+  [x]
+  (and (map? x)
+       (contains? x :portage-error)))
+
+(defn error-value
+  [x]
+  (:portage-error x))
 
 (defmacro -+->
   ([x form]
@@ -23,7 +46,17 @@ Forms that are already lists are unchanged."
      (let [form (promote-to-list form)]
        (if (portageable? (first form))
          (let [sym (gensym)]
-           `(do (~(first form) (fn [~sym] (-+-> ~sym ~@more)) ~x ~@(next form))
-                nil))
-         `(do (-+-> (-> ~x ~form) ~@more)
-              nil)))))
+           (if (accepts-errors? (first form))
+             `(do (~(first form) (fn [~sym] (-+-> ~sym ~@more))
+                     ~x ~@(next form)) nil)
+             `(do (if (error? ~x)
+                    (-+-> ~x ~@more)
+                    (~(first form) (fn [~sym] (-+-> ~sym ~@more))
+                     ~x ~@(next form)))
+                  nil)))
+         (if (accepts-errors? (first form))
+           `(do (-+-> (-> ~x ~form) ~@more) nil)
+           `(do (if (error? ~x)
+                  (-+-> ~x ~@more)
+                  (-+-> (-> ~x ~form) ~@more))
+                nil))))))

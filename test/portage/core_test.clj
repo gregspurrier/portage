@@ -60,3 +60,29 @@
             (one-arg-fn ..result1..) => ..result2..
             (one-arg-fn ..result2..) => ..result3..
             (result-fn ..result3..) => ..anything..))
+
+(fact "Errors bypass intermediate forms, but not the final form"
+  (let [err (error "an error")]
+    (-+-> err
+          one-arg-fn
+          portage-wrapped-one-arg-fn
+          result-fn)
+    => nil
+    (provided (one-arg-fn err) => nil :times 0
+              (portage-wrapped-one-arg-fn) => nil :times 0
+              (result-fn err) => ..anything..)))
+
+(defn ^:accepts-errors error-accepting-fn
+  [x]
+  x)
+
+(fact "Intermediate forms marked as :accepts-errors are not bypassed"
+  (let [err (error "an error")]
+    (-+-> err
+          error-accepting-fn
+          one-arg-fn
+          result-fn)
+    => nil
+    (provided (error-accepting-fn err) => err
+              (one-arg-fn err) => nil :times 0
+              (result-fn err) => ..anything..)))
