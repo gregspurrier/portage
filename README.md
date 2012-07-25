@@ -22,7 +22,7 @@ You chart your course down a river of functions. Portage gets you through the as
 ;; form should do something with the result.
 (-+-> "With portage "
       (str "you can mix normal ")
-      (async-str "and asyncronous functions ")
+      (async-str "and asynchronous functions ")
       (str "in the same flow.")
       (async-str "\nCarry on.")
       println)
@@ -32,7 +32,7 @@ You chart your course down a river of functions. Portage gets you through the as
 ;;
 ;;   Awaiting asynchronous result...
 ;;   Awaiting asynchronous result...
-;;   With portage you can mix normal and asyncronous functions in the same flow.
+;;   With portage you can mix normal and asynchronous functions in the same flow.
 ;;   Carry on.
 ```
 
