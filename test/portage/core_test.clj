@@ -1,6 +1,9 @@
 (ns portage.core-test
   (:use portage.core
-        midje.sweet))
+        midje.sweet
+        [midje.util :only (expose-testables)]))
+
+(expose-testables portage.core)
 
 (unfinished result-fn one-arg-fn two-arg-fn)
 
@@ -13,6 +16,16 @@
   [cc x a]
   (cc (two-arg-fn x a))
   42)
+
+(facts "about portageable?"
+  (portageable? 'portage-wrapped-one-arg-fn)
+  => true
+  (portageable? 'identity)
+  => false
+  (portageable? :foo)
+  => false
+  (portageable? '(fn [x] x))
+  => false)
 
 (fact "normal functions are threaded as with ->"
   (-+-> ..input..
