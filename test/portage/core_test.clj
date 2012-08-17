@@ -58,9 +58,9 @@
         one-arg-fn
         result-fn)
   => nil
-  (provided (two-arg-fn ..input.. ..arg..) => ..result1..
-            (one-arg-fn ..result1..) => ..result2..
-            (one-arg-fn ..result2..) => ..result3..
+  (provided (two-arg-fn ..input.. ..arg..) => ..result1.. :times 1
+            (one-arg-fn ..result1..) => ..result2.. :times 1
+            (one-arg-fn ..result2..) => ..result3.. :times 1
             (result-fn ..result3..) => ..anything..)
 
   (-+-> ..input..
@@ -96,6 +96,6 @@
           one-arg-fn
           result-fn)
     => nil
-    (provided (error-accepting-fn err) => err
+    (provided (error-accepting-fn err) => err :times 1
               (one-arg-fn err) => nil :times 0
               (result-fn err) => ..anything..)))

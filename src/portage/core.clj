@@ -76,13 +76,17 @@ do something useful with the final value."
        (if (portageable? rator)
          (if (accepts-errors? rator)
            `(do ~(inject-arguments form (continuation-form more) x) nil)
-           `(do (if (error? ~x)
-                  (-+-> ~x ~@more)
-                  ~(inject-arguments form (continuation-form more) x))
-                nil))
+           (let [val-sym (gensym)]
+             `(let [~val-sym ~x]
+                (if (error? ~val-sym)
+                  (-+-> ~val-sym ~@more)
+                  ~(inject-arguments form (continuation-form more) val-sym))
+                nil)))
          (if (accepts-errors? rator)
            `(do (-+-> (-> ~x ~form) ~@more) nil)
-           `(do (if (error? ~x)
-                  (-+-> ~x ~@more)
-                  (-+-> (-> ~x ~form) ~@more))
-                nil))))))
+           (let [val-sym (gensym)]
+             `(let [~val-sym ~x]
+                (if (error? ~val-sym)
+                  (-+-> ~val-sym ~@more)
+                  (-+-> (-> ~val-sym ~form) ~@more))
+                nil)))))))
