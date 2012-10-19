@@ -149,3 +149,6 @@
               (one-arg-fn err) => nil :times 0
               (result-fn err) => ..anything..)))
 
+(fact "about run"
+  (run (fn [k arg1 arg2] (k [arg1 arg2])) ..arg1.. ..arg2..)
+  => [..arg1.. ..arg2..])

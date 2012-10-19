@@ -134,3 +134,11 @@ than as the first argument."
                   (-+->> ~val-sym ~@more)
                   (-+->> (->> ~val-sym ~form) ~@more))
                 nil)))))))
+
+(defn run
+  "Given a porteagable function and its non-continuation arguments,
+  runs the function and then waits for and returns the result."
+  [pf & args]
+  (let [result-promise (promise)]
+    (apply pf (fn [result] (deliver result-promise result)) args)
+    @result-promise))
