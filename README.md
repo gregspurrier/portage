@@ -46,7 +46,6 @@ Use `portage.core/error?` to determine whether a value is an error. The value wr
 ## To Do
 - Catch exceptions in form execution and wrap them in portage errors
 - Parallel async flows
-- Make `-+->>`, equivalent to `->>`
 - Convenience wrapper block waiting for blocking for, and returning, final result
 
 ## License

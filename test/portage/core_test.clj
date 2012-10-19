@@ -27,52 +27,101 @@
   (portageable? '(fn [x] x))
   => false)
 
-(fact "normal functions are threaded as with ->"
-  (-+-> ..input..
-        one-arg-fn
-        (one-arg-fn)
-        (two-arg-fn ..arg..)
-        result-fn)
-  => nil
-  (provided (one-arg-fn ..input..) => ..result1..
-            (one-arg-fn ..result1..) => ..result2..
-            (two-arg-fn ..result2.. ..arg..) => ..result3..
-            (result-fn ..result3..) => ..anything..))
+(facts "about -+->"
+  (fact "normal functions are threaded as with ->"
+    (-+-> ..input..
+          one-arg-fn
+          (one-arg-fn)
+          (two-arg-fn ..arg..)
+          result-fn)
+    => nil
+    (provided (one-arg-fn ..input..) => ..result1..
+              (one-arg-fn ..result1..) => ..result2..
+              (two-arg-fn ..result2.. ..arg..) => ..result3..
+              (result-fn ..result3..) => ..anything..))
 
-(fact "portageable functions appear to be threaded as with ->"
-  (-+-> ..input..
-        portage-wrapped-one-arg-fn
-        (portage-wrapped-one-arg-fn)
-        (portage-wrapped-two-arg-fn ..arg..)
-        result-fn)
-  => nil
-  (provided (one-arg-fn ..input..) => ..result1..
-            (one-arg-fn ..result1..) => ..result2..
-            (two-arg-fn ..result2.. ..arg..) => ..result3..
-            (result-fn ..result3..) => ..anything..))
+  (fact "portageable functions appear to be threaded as with ->"
+    (-+-> ..input..
+          portage-wrapped-one-arg-fn
+          (portage-wrapped-one-arg-fn)
+          (portage-wrapped-two-arg-fn ..arg..)
+          result-fn)
+    => nil
+    (provided (one-arg-fn ..input..) => ..result1..
+              (one-arg-fn ..result1..) => ..result2..
+              (two-arg-fn ..result2.. ..arg..) => ..result3..
+              (result-fn ..result3..) => ..anything..))
 
-(fact "normal and porteagable functions can be mixed in the same flow"
-  (-+-> ..input..
-        (two-arg-fn ..arg..)
-        portage-wrapped-one-arg-fn
-        one-arg-fn
-        result-fn)
-  => nil
-  (provided (two-arg-fn ..input.. ..arg..) => ..result1.. :times 1
-            (one-arg-fn ..result1..) => ..result2.. :times 1
-            (one-arg-fn ..result2..) => ..result3.. :times 1
-            (result-fn ..result3..) => ..anything..)
+  (fact "normal and porteagable functions can be mixed in the same flow"
+    (-+-> ..input..
+          (two-arg-fn ..arg..)
+          portage-wrapped-one-arg-fn
+          one-arg-fn
+          result-fn)
+    => nil
+    (provided (two-arg-fn ..input.. ..arg..) => ..result1.. :times 1
+              (one-arg-fn ..result1..) => ..result2.. :times 1
+              (one-arg-fn ..result2..) => ..result3.. :times 1
+              (result-fn ..result3..) => ..anything..)
 
-  (-+-> ..input..
-        (portage-wrapped-two-arg-fn ..arg..)
-        one-arg-fn
-        portage-wrapped-one-arg-fn
-        result-fn)
-  => nil
-  (provided (two-arg-fn ..input.. ..arg..) => ..result1..
-            (one-arg-fn ..result1..) => ..result2..
-            (one-arg-fn ..result2..) => ..result3..
-            (result-fn ..result3..) => ..anything..))
+    (-+-> ..input..
+          (portage-wrapped-two-arg-fn ..arg..)
+          one-arg-fn
+          portage-wrapped-one-arg-fn
+          result-fn)
+    => nil
+    (provided (two-arg-fn ..input.. ..arg..) => ..result1..
+              (one-arg-fn ..result1..) => ..result2..
+              (one-arg-fn ..result2..) => ..result3..
+              (result-fn ..result3..) => ..anything..)))
+
+(facts "about -+->>"
+  (fact "normal functions are threaded as with ->>"
+    (-+->> ..input..
+           one-arg-fn
+           (one-arg-fn)
+           (two-arg-fn ..arg..)
+           result-fn)
+    => nil
+    (provided (one-arg-fn ..input..) => ..result1..
+              (one-arg-fn ..result1..) => ..result2..
+              (two-arg-fn ..arg.. ..result2..) => ..result3..
+              (result-fn ..result3..) => ..anything..))
+
+  (fact "portageable functions appear to be threaded as with ->>"
+    (-+->> ..input..
+           portage-wrapped-one-arg-fn
+           (portage-wrapped-one-arg-fn)
+           (portage-wrapped-two-arg-fn ..arg..)
+           result-fn)
+    => nil
+    (provided (one-arg-fn ..input..) => ..result1..
+              (one-arg-fn ..result1..) => ..result2..
+              (two-arg-fn ..arg.. ..result2..) => ..result3..
+              (result-fn ..result3..) => ..anything..))
+
+  (fact "normal and porteagable functions can be mixed in the same flow"
+    (-+->> ..input..
+          (two-arg-fn ..arg..)
+          portage-wrapped-one-arg-fn
+          one-arg-fn
+          result-fn)
+    => nil
+    (provided (two-arg-fn ..arg.. ..input..) => ..result1.. :times 1
+              (one-arg-fn ..result1..) => ..result2.. :times 1
+              (one-arg-fn ..result2..) => ..result3.. :times 1
+              (result-fn ..result3..) => ..anything..)
+
+    (-+->> ..input..
+          (portage-wrapped-two-arg-fn ..arg..)
+          one-arg-fn
+          portage-wrapped-one-arg-fn
+          result-fn)
+    => nil
+    (provided (two-arg-fn ..arg.. ..input..) => ..result1..
+              (one-arg-fn ..result1..) => ..result2..
+              (one-arg-fn ..result2..) => ..result3..
+              (result-fn ..result3..) => ..anything..)))
 
 (fact "Errors bypass intermediate forms, but not the final form"
   (let [err (error "an error")]
@@ -99,3 +148,4 @@
     (provided (error-accepting-fn err) => err :times 1
               (one-arg-fn err) => nil :times 0
               (result-fn err) => ..anything..)))
+

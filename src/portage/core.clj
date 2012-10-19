@@ -45,11 +45,11 @@ Forms that are already lists are unchanged."
   (with-meta `(~(first form) ~@args ~@(next form)) (meta form)))
 
 (defn- continuation-form
-  "Creates a function form representing the continuation of the -+-> expression
-with the remaining-forms."
-  [remaining-forms]
+  "Creates a function form representing the continuation of the
+portage threading expression with the remaining-forms."
+  [threader remaining-forms]
   (let [sym (gensym)]
-    `(fn [~sym] (-+-> ~sym ~@remaining-forms))))
+    `(fn [~sym] (~threader ~sym ~@remaining-forms))))
 
 (defmacro -+->
   "Threads x through the forms in a manner similar to the -> macro.
@@ -75,12 +75,12 @@ do something useful with the final value."
            rator (first form)]
        (if (portageable? rator)
          (if (accepts-errors? rator)
-           `(do ~(inject-arguments form (continuation-form more) x) nil)
+           `(do ~(inject-arguments form (continuation-form '-+-> more) x) nil)
            (let [val-sym (gensym)]
              `(let [~val-sym ~x]
                 (if (error? ~val-sym)
                   (-+-> ~val-sym ~@more)
-                  ~(inject-arguments form (continuation-form more) val-sym))
+                  ~(inject-arguments form (continuation-form '-+-> more) val-sym))
                 nil)))
          (if (accepts-errors? rator)
            `(do (-+-> (-> ~x ~form) ~@more) nil)
@@ -89,4 +89,48 @@ do something useful with the final value."
                 (if (error? ~val-sym)
                   (-+-> ~val-sym ~@more)
                   (-+-> (-> ~val-sym ~form) ~@more))
+                nil)))))))
+
+(defn- inject-arguments-at-end
+  "Splices args into the form as the last argument(s)."
+  [form & args]
+  ;; Preserve metadata like clojure.core/-> does2
+  (let [[arg1 arg2] args]
+    (if arg2
+      ;; arg1 is continuation arg2 is the real argument
+      (with-meta `(~(first form) ~arg1 ~@(next form) ~arg2) (meta form))
+      (with-meta `(~@form ~arg1) (meta form)))))
+
+
+(defmacro -+->>
+  "The portage equivalent of the ->> macro. Behaves like -+->, except
+that the threaded result is inserted at the end of the form rather
+than as the first argument."
+  ([x form]
+     (let [form (promote-to-list form)]
+       `(do ~(inject-arguments-at-end form x) nil)))
+  ([x form & more]
+     (let [form (promote-to-list form)
+           rator (first form)]
+       (if (portageable? rator)
+         (if (accepts-errors? rator)
+           `(do ~(inject-arguments-at-end form
+                                          (continuation-form '-+->> more)
+                                          x)
+                nil)
+           (let [val-sym (gensym)]
+             `(let [~val-sym ~x]
+                (if (error? ~val-sym)
+                  (-+->> ~val-sym ~@more)
+                  ~(inject-arguments-at-end form
+                                            (continuation-form `-+->> more)
+                                            val-sym))
+                nil)))
+         (if (accepts-errors? rator)
+           `(do (-+->> (-> ~x ~form) ~@more) nil)
+           (let [val-sym (gensym)]
+             `(let [~val-sym ~x]
+                (if (error? ~val-sym)
+                  (-+->> ~val-sym ~@more)
+                  (-+->> (->> ~val-sym ~form) ~@more))
                 nil)))))))
