@@ -1,5 +1,4 @@
-(ns portage.core
-  (:use clojure.pprint))
+(ns portage.core)
 
 (defn error
   "Create a Portage error having the value x"
@@ -38,11 +37,23 @@ Forms that are already lists are unchanged."
     form
     (list form)))
 
-(defn- inject-arguments
-  "Splices args into the form as the first argument(s)."
-  [form & args]
-  ;; Preserve metadata like clojure.core/-> does2
-  (with-meta `(~(first form) ~@args ~@(next form)) (meta form)))
+;; clojure.core/-> is careful to preserve the metadata of the forms that
+;; it modifies, so we mirror that practice here.
+(defn- inject-first-arg
+  [form arg]
+  (with-meta `(~(first form) ~arg ~@(next form)) (meta form)))
+
+(defn- inject-k-and-first-arg
+  [form k arg]
+  (with-meta `(~(first form) ~k ~arg ~@(next form)) (meta form)))
+
+(defn- inject-last-arg
+  [form arg]
+  (with-meta `(~@form ~arg) (meta form)))
+
+(defn- inject-k-and-last-arg
+  [form k arg]
+  (with-meta `(~(first form) ~k ~@(next form) ~arg) (meta form)))
 
 (defn- continuation-form
   "Creates a function form representing the continuation of the
@@ -50,6 +61,36 @@ portage threading expression with the remaining-forms."
   [threader remaining-forms]
   (let [sym (gensym)]
     `(fn [~sym] (~threader ~sym ~@remaining-forms))))
+
+(defn- build-terminal-step
+  [argument-injector x form]
+  (let [form (promote-to-list form)]
+    `(do ~(argument-injector form x) nil)))
+
+(defn- build-non-terminal-step
+  [thread-sym p-thread-sym argument-injector x form more]
+  (let [form (promote-to-list form)
+        rator (first form)]
+    (if (portageable? rator)
+      (if (accepts-errors? rator)
+        `(do ~(argument-injector form (continuation-form p-thread-sym more) x)
+             nil)
+        (let [val-sym (gensym)]
+          `(let [~val-sym ~x]
+             (if (error? ~val-sym)
+               (~p-thread-sym ~val-sym ~@more)
+               ~(argument-injector form
+                                   (continuation-form p-thread-sym more)
+                                   val-sym))
+             nil)))
+      (if (accepts-errors? rator)
+        `(do (~p-thread-sym (-> ~x ~form) ~@more) nil)
+        (let [val-sym (gensym)]
+          `(let [~val-sym ~x]
+             (if (error? ~val-sym)
+               (~p-thread-sym ~val-sym ~@more)
+               (~p-thread-sym (~thread-sym ~val-sym ~form) ~@more))
+             nil))))))
 
 (defmacro -+->
   "Threads x through the forms in a manner similar to the -> macro.
@@ -68,72 +109,18 @@ portage.core/error-value to retrieve a portage error's wrapped value.
 -+-> always returns nil. It is expected that the final form will
 do something useful with the final value."
   ([x form]
-     (let [form (promote-to-list form)]
-       `(do ~(inject-arguments form x) nil)))
+     (build-terminal-step inject-first-arg x form))
   ([x form & more]
-     (let [form (promote-to-list form)
-           rator (first form)]
-       (if (portageable? rator)
-         (if (accepts-errors? rator)
-           `(do ~(inject-arguments form (continuation-form '-+-> more) x) nil)
-           (let [val-sym (gensym)]
-             `(let [~val-sym ~x]
-                (if (error? ~val-sym)
-                  (-+-> ~val-sym ~@more)
-                  ~(inject-arguments form (continuation-form '-+-> more) val-sym))
-                nil)))
-         (if (accepts-errors? rator)
-           `(do (-+-> (-> ~x ~form) ~@more) nil)
-           (let [val-sym (gensym)]
-             `(let [~val-sym ~x]
-                (if (error? ~val-sym)
-                  (-+-> ~val-sym ~@more)
-                  (-+-> (-> ~val-sym ~form) ~@more))
-                nil)))))))
-
-(defn- inject-arguments-at-end
-  "Splices args into the form as the last argument(s)."
-  [form & args]
-  ;; Preserve metadata like clojure.core/-> does2
-  (let [[arg1 arg2] args]
-    (if arg2
-      ;; arg1 is continuation arg2 is the real argument
-      (with-meta `(~(first form) ~arg1 ~@(next form) ~arg2) (meta form))
-      (with-meta `(~@form ~arg1) (meta form)))))
-
+     (build-non-terminal-step '-> '-+-> inject-k-and-first-arg x form more)))
 
 (defmacro -+->>
   "The portage equivalent of the ->> macro. Behaves like -+->, except
 that the threaded result is inserted at the end of the form rather
 than as the first argument."
   ([x form]
-     (let [form (promote-to-list form)]
-       `(do ~(inject-arguments-at-end form x) nil)))
+     (build-terminal-step inject-last-arg x form))
   ([x form & more]
-     (let [form (promote-to-list form)
-           rator (first form)]
-       (if (portageable? rator)
-         (if (accepts-errors? rator)
-           `(do ~(inject-arguments-at-end form
-                                          (continuation-form '-+->> more)
-                                          x)
-                nil)
-           (let [val-sym (gensym)]
-             `(let [~val-sym ~x]
-                (if (error? ~val-sym)
-                  (-+->> ~val-sym ~@more)
-                  ~(inject-arguments-at-end form
-                                            (continuation-form `-+->> more)
-                                            val-sym))
-                nil)))
-         (if (accepts-errors? rator)
-           `(do (-+->> (-> ~x ~form) ~@more) nil)
-           (let [val-sym (gensym)]
-             `(let [~val-sym ~x]
-                (if (error? ~val-sym)
-                  (-+->> ~val-sym ~@more)
-                  (-+->> (->> ~val-sym ~form) ~@more))
-                nil)))))))
+     (build-non-terminal-step '->> '-+->> inject-k-and-last-arg x form more)))
 
 (defn run
   "Given a porteagable function and its non-continuation arguments,
